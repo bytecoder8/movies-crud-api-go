@@ -62,6 +62,35 @@ func createMovie(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(movie)
 }
 
+func updateMovie(res http.ResponseWriter, req *http.Request) {
+	res.Header().Add("Content-Type", "application/json")
+	params := mux.Vars(req)
+
+	movieIndex := -1
+	for index, item := range movies {
+		if item.ID == params["id"] {
+			movieIndex = index
+			break
+		}
+	}
+
+	if movieIndex == -1 {
+		http.Error(res, "Movie not found", http.StatusNotFound)
+	}
+
+	var movie Movie
+	err := json.NewDecoder(req.Body).Decode(&movie)
+	if err != nil {
+		http.Error(res, "Error decoding data", http.StatusInternalServerError)
+		return
+	}
+
+	movie.ID = params["id"]
+	movies[movieIndex] = movie
+
+	json.NewEncoder(res).Encode(movie)
+}
+
 func deleteMovie(res http.ResponseWriter, req *http.Request) {
 	res.Header().Add("Content-Type", "application/json")
 	params := mux.Vars(req)
@@ -101,6 +130,7 @@ func main() {
 	r.HandleFunc("/movies", createMovie).Methods("POST")
 	r.HandleFunc("/movies/{id}", getMovie).Methods("GET")
 	r.HandleFunc("/movies/{id}", deleteMovie).Methods("DELETE")
+	r.HandleFunc("/movies/{id}", updateMovie).Methods("PATCH")
 
 	fmt.Printf("Starting server at PORT:%d\n", PORT)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), r); err != nil {
