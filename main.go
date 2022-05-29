@@ -24,10 +24,6 @@ type Director struct {
 
 var movies []Movie
 
-func getIndex(res http.ResponseWriter, req *http.Request) {
-	res.Write([]byte("Hello! 🐶"))
-}
-
 func getMovies(res http.ResponseWriter, req *http.Request) {
 	res.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(res).Encode(movies)
