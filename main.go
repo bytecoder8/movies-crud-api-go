@@ -20,6 +20,14 @@ type Director struct {
 	LastName  string `json:"lastname"`
 }
 
+type appHandler func(http.ResponseWriter, *http.Request) error
+
+func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if err := fn(w, r); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 var movies []Movie
 
 const PORT = 8080
@@ -28,16 +36,17 @@ func createRouter() *mux.Router {
 	r := mux.NewRouter()
 
 	// Routes
-	r.HandleFunc("/movies", getMovies).Methods("GET")
-	r.HandleFunc("/movies", createMovie).Methods("POST")
-	r.HandleFunc("/movies/{id}", getMovie).Methods("GET")
-	r.HandleFunc("/movies/{id}", deleteMovie).Methods("DELETE")
-	r.HandleFunc("/movies/{id}", updateMovie).Methods("PATCH")
+	r.Handle("/movies", appHandler(getMovies)).Methods("GET")
+	r.Handle("/movies", appHandler(createMovie)).Methods("POST")
+	r.Handle("/movies/{id}", appHandler(getMovie)).Methods("GET")
+	r.Handle("/movies/{id}", appHandler(deleteMovie)).Methods("DELETE")
+	r.Handle("/movies/{id}", appHandler(updateMovie)).Methods("PATCH")
 
 	return r
 }
 
-func init() {
+func seedData() {
+	movies = make([]Movie, 0)
 	movies = append(movies, Movie{
 		ID: "1", Isbn: "23456", Title: "First Movie",
 		Director: &Director{
@@ -53,6 +62,10 @@ func init() {
 			LastName:  "Smith",
 		},
 	})
+}
+
+func init() {
+	seedData()
 }
 
 func main() {

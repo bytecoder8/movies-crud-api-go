@@ -8,41 +8,41 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func getMovies(res http.ResponseWriter, req *http.Request) {
+func getMovies(res http.ResponseWriter, req *http.Request) error {
 	res.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(res).Encode(movies)
+	return json.NewEncoder(res).Encode(movies)
 }
 
-func getMovie(res http.ResponseWriter, req *http.Request) {
+func getMovie(res http.ResponseWriter, req *http.Request) error {
 	res.Header().Add("Content-Type", "application/json")
 
 	params := mux.Vars(req)
 
 	for _, item := range movies {
 		if item.ID == params["id"] {
-			json.NewEncoder(res).Encode(item)
-			return
+			return json.NewEncoder(res).Encode(item)
 		}
 	}
 
 	http.Error(res, "Movie not found", http.StatusNotFound)
+	return nil
 }
 
-func createMovie(res http.ResponseWriter, req *http.Request) {
+func createMovie(res http.ResponseWriter, req *http.Request) error {
 	res.Header().Add("Content-Type", "application/json")
 	var movie Movie
 	err := json.NewDecoder(req.Body).Decode(&movie)
 	if err != nil {
 		http.Error(res, "Error decoding data", http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	movie.ID = strconv.Itoa(len(movies) + 1)
 	movies = append(movies, movie)
-	json.NewEncoder(res).Encode(movie)
+	return json.NewEncoder(res).Encode(movie)
 }
 
-func updateMovie(res http.ResponseWriter, req *http.Request) {
+func updateMovie(res http.ResponseWriter, req *http.Request) error {
 	res.Header().Add("Content-Type", "application/json")
 	params := mux.Vars(req)
 
@@ -56,22 +56,22 @@ func updateMovie(res http.ResponseWriter, req *http.Request) {
 
 	if movieIndex == -1 {
 		http.Error(res, "Movie not found", http.StatusNotFound)
+		return nil
 	}
 
 	var movie Movie
 	err := json.NewDecoder(req.Body).Decode(&movie)
 	if err != nil {
-		http.Error(res, "Error decoding data", http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	movie.ID = params["id"]
 	movies[movieIndex] = movie
 
-	json.NewEncoder(res).Encode(movie)
+	return json.NewEncoder(res).Encode(movie)
 }
 
-func deleteMovie(res http.ResponseWriter, req *http.Request) {
+func deleteMovie(res http.ResponseWriter, req *http.Request) error {
 	res.Header().Add("Content-Type", "application/json")
 	params := mux.Vars(req)
 	for index, item := range movies {
@@ -81,5 +81,5 @@ func deleteMovie(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	json.NewEncoder(res).Encode(movies)
+	return json.NewEncoder(res).Encode(movies)
 }
